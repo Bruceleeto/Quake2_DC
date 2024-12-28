@@ -441,62 +441,55 @@ Loads the header and directory, adding the files at the beginning
 of the list so they override previous pack files.
 =================
 */
-pack_t *FS_LoadPackFile (char *packfile)
+pack_t *FS_LoadPackFile(char *packfile)
 {
-	dpackheader_t	header;
-	int				i;
-	packfile_t		*newfiles;
-	int				numpackfiles;
-	pack_t			*pack;
-	FILE			*packhandle;
-	dpackfile_t		info[MAX_FILES_IN_PACK];
-	unsigned		checksum;
+    dpackheader_t header;
+    packfile_t *newfiles;
+    pack_t *pack;
+    FILE *packhandle;
+    dpackfile_t info;
+    int i, numpackfiles;
 
-	packhandle = fopen(packfile, "rb");
-	if (!packhandle)
-		return NULL;
+    packhandle = fopen(packfile, "rb");
+    if (!packhandle)
+        return NULL;
 
-	fread (&header, 1, sizeof(header), packhandle);
-	if (LittleLong(header.ident) != IDPAKHEADER)
-		Com_Error (ERR_FATAL, "%s is not a packfile", packfile);
-	header.dirofs = LittleLong (header.dirofs);
-	header.dirlen = LittleLong (header.dirlen);
+    fread(&header, 1, sizeof(header), packhandle);
+    if (LittleLong(header.ident) != IDPAKHEADER) {
+        fclose(packhandle);
+        return NULL;
+    }
 
-	numpackfiles = header.dirlen / sizeof(dpackfile_t);
+    header.dirofs = LittleLong(header.dirofs);
+    header.dirlen = LittleLong(header.dirlen);
 
-	if (numpackfiles > MAX_FILES_IN_PACK)
-		Com_Error (ERR_FATAL, "%s has %i files", packfile, numpackfiles);
+    numpackfiles = header.dirlen / sizeof(dpackfile_t);
+    if (numpackfiles > MAX_FILES_IN_PACK) {
+        fclose(packhandle);
+        return NULL;
+    }
 
-	newfiles = Z_Malloc (numpackfiles * sizeof(packfile_t));
+    // Only allocate exactly what we need
+    pack = Z_Malloc(sizeof(pack_t));
+    newfiles = Z_Malloc(numpackfiles * sizeof(packfile_t));
 
-	fseek (packhandle, header.dirofs, SEEK_SET);
-	fread (info, 1, header.dirlen, packhandle);
+    fseek(packhandle, header.dirofs, SEEK_SET);
+    
+    // Read files one at a time instead of loading entire directory
+    for (i = 0; i < numpackfiles; i++) {
+        fread(&info, 1, sizeof(dpackfile_t), packhandle);
+        strcpy(newfiles[i].name, info.name);
+        newfiles[i].filepos = LittleLong(info.filepos);
+        newfiles[i].filelen = LittleLong(info.filelen);
+    }
 
-// crc the directory to check for modifications
-	checksum = Com_BlockChecksum ((void *)info, header.dirlen);
+    strcpy(pack->filename, packfile);
+    pack->handle = packhandle;
+    pack->numfiles = numpackfiles;
+    pack->files = newfiles;
 
-#ifdef NO_ADDONS
-	if (checksum != PAK0_CHECKSUM)
-		return NULL;
-#endif
-// parse the directory
-	for (i=0 ; i<numpackfiles ; i++)
-	{
-		strcpy (newfiles[i].name, info[i].name);
-		newfiles[i].filepos = LittleLong(info[i].filepos);
-		newfiles[i].filelen = LittleLong(info[i].filelen);
-	}
-
-	pack = Z_Malloc (sizeof (pack_t));
-	strcpy (pack->filename, packfile);
-	pack->handle = packhandle;
-	pack->numfiles = numpackfiles;
-	pack->files = newfiles;
-	
-	Com_Printf ("Added packfile %s (%i files)\n", packfile, numpackfiles);
-	return pack;
+    return pack;
 }
-
 
 /*
 ================
@@ -519,7 +512,7 @@ void FS_AddGameDirectory (char *dir)
 
     // First, construct the base directory path
     // Instead of adding /pc/ after each dir, we want it before baseq2
-    Com_sprintf(base_dir, sizeof(base_dir), "%s/cd/baseq2", dir);
+    Com_sprintf(base_dir, sizeof(base_dir), "%s/pc/baseq2", dir);
     
     strcpy(fs_gamedir, base_dir);
 

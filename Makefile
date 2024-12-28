@@ -287,11 +287,11 @@ clean:
 	-rm -f $(TARGET)
 
 dist: $(TARGET)
-	$(KOS_STRIP) $(TARGET)
+	$(KOS_STRIP) $(TARGET) -n 
 
 # Run target for dc-tool
 run: $(TARGET)
-	$(KOS_LOADER) $(TARGET)
+	$(KOS_LOADER) $(TARGET) -n 
 
 
 # CDI creation targets
@@ -316,7 +316,7 @@ cdi: $(TARGET)
 # Create SD card compatible ISO
 sdiso: cdi
 	$(RM) $(SDISO_OUTPUT)
-	mksdiso -h $(CDI_OUTPUT) $(SDISO_OUTPUT)
+	mksdiso -h $(CDI_OUTPUT) $(SDISO_OUTPUT) -n 
 
 # Update clean target to also clean CDI files
 clean: 

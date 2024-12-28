@@ -11,6 +11,7 @@
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <errno.h>
+#include <arpa/inet.h>
 
 #ifdef __APPLE__
 #include <libc.h>
@@ -231,7 +232,7 @@ qboolean	NET_GetLoopPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_me
 	i = loop->get & (MAX_LOOPBACK-1);
 	loop->get++;
 
-	memcpy_fast (net_message->data, loop->msgs[i].data, loop->msgs[i].datalen);
+	memcpy (net_message->data, loop->msgs[i].data, loop->msgs[i].datalen);
 	net_message->cursize = loop->msgs[i].datalen;
 	*net_from = net_local_adr;
 	return true;
@@ -249,7 +250,7 @@ void NET_SendLoopPacket (netsrc_t sock, int length, void *data, netadr_t to)
 	i = loop->send & (MAX_LOOPBACK-1);
 	loop->send++;
 
-	memcpy_fast (loop->msgs[i].data, data, length);
+	memcpy (loop->msgs[i].data, data, length);
 	loop->msgs[i].datalen = length;
 }
 

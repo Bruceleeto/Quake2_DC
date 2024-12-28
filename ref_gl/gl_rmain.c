@@ -732,8 +732,8 @@ void R_SetupGL (void)
     // Use GLM for transformations
     mat4 model_temp = GLM_MAT4_IDENTITY_INIT;
 
-    glm_rotate_x(model_temp, DEG2RAD(-90.0f), model_temp);  // put Z going up
-    glm_rotate_z(model_temp, DEG2RAD(90), model_temp);      // put Z going up
+    glm_rotate_x(model_temp, DEG2RAD(-90.0f), model_temp);    
+    glm_rotate_z(model_temp, DEG2RAD(90), model_temp);       
 
     glm_rotate_x(model_temp, DEG2RAD(-r_newrefdef.viewangles[2]), model_temp);
     glm_rotate_y(model_temp, DEG2RAD(-r_newrefdef.viewangles[0]), model_temp);
